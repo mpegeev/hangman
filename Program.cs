@@ -17,7 +17,7 @@ Console.WriteLine($"""
 
 Console.WriteLine("Введи слово или фразу от 3 до 50 букв, которое будем угадывать.");
 
-string word = null!;
+string phrase = null!;
 bool inputValid = false;
 while (!inputValid) // валидируем загаданное слово
 {
@@ -36,7 +36,7 @@ while (!inputValid) // валидируем загаданное слово
         else
         {
             inputValid = 3 <= normalized.Length && normalized.Length <= 50; // проверяем длину слова
-            word = normalized; // записываем в переменную, с которой будем дальше работать
+            phrase = normalized; // записываем в переменную, с которой будем дальше работать
         }
     }
 
@@ -53,7 +53,8 @@ var playerName = Console.ReadLine();
 Console.Clear();
 if (string.IsNullOrWhiteSpace(playerName))
     playerName = "Неизвестный герой";
-Console.WriteLine($"Отлично! Приятно познакомиться! {playerName}, тебе нужно угадать слово из {word.Length} букв.");
+var wordsInPhrase = phrase.Split(' ');
+Console.WriteLine($"Отлично! Приятно познакомиться! {playerName}, тебе нужно угадать фразу из {wordsInPhrase.Length} слов и {wordsInPhrase.Sum(word => word.Length)} букв.");
 Console.WriteLine($"Если справишься, то молодец, а если нет, то тебя вздёрнут на ВИСЕЛИЦЕ.");
 Console.WriteLine($"Вперёд!\n\nНажми любую кнопку.");
 Console.ReadKey();
@@ -74,7 +75,7 @@ while (currentTry <= 10) // начинаем игру
     DrawMatchedLetters(); // выводим названные буквы
     DrawMatchedWord(); // выводим слово с угаданными буквами
 
-    Console.WriteLine($"\n\nВведи букву или слово целиком");
+    Console.WriteLine($"\n\nВведи букву или фразу целиком");
     var userInput = Console.ReadLine();
 
     if (string.IsNullOrWhiteSpace(userInput)) // пусто (нажали Enter либо одни пробелы)
@@ -96,7 +97,7 @@ while (currentTry <= 10) // начинаем игру
             continue;
         }
         userLetters[letter] = letter; // ввели букву, кладём в массив
-        if (word.Contains(letter)) // такая буква есть в слове
+        if (phrase.Contains(letter)) // такая буква есть в слове
         {
             matchedLetters[letter] = true;
             if (IsSuccess()) // проверяем, не отгадано ли слово
@@ -115,14 +116,14 @@ while (currentTry <= 10) // начинаем игру
         currentTry++;
         continue;
     }
-    if (userInput.Length != word.Length) // неправильная длина слова
+    if (userInput.Length != phrase.Length) // неправильная длина слова
     {
         DrawAnswerAtTop("Ошибся с длиной слова, нещитово! Пробуй снова.");
         continue;
     }
-    if (userInput.Length == word.Length) // ввели слово, проверяем
+    if (userInput.Length == phrase.Length) // ввели слово, проверяем
     {
-        if (string.Compare(userInput, word, StringComparison.OrdinalIgnoreCase) == 0) // угадал
+        if (string.Compare(userInput, phrase, StringComparison.OrdinalIgnoreCase) == 0) // угадал
         {
             DrawSuccessAndWait();
             return;
@@ -136,12 +137,20 @@ while (currentTry <= 10) // начинаем игру
 }
 
 // попытки закончились
-DrawAnswerAtTop($"Загаданное слово: {word}");
+DrawAnswerAtTop($"Загаданная фраза: {phrase}");
 DrawGallows(11);
 Console.ReadKey();
 
 bool IsValidLetter(char letter) => allLetters.Contains(letter) || letter == ' '; // пробел либо буква из алфавита
-bool IsSuccess() => word.All(userLetters.Contains); // проверяем, угадано ли слово
+bool IsSuccess() // проверяем, угадано ли слово
+{
+    bool isSuccess = true;
+    foreach (var item in phrase.Split(' '))
+    {
+        isSuccess = isSuccess && item.All(userLetters.Contains);
+    }
+    return isSuccess;
+}
 
 void DrawAnswerAtTop(string message) // выводим сообщение от игры
 {
@@ -156,7 +165,7 @@ void DrawMatchedLetters() // выводим названные букв
 void DrawMatchedWord() // выводим слово с угаданными буквами
 {
     Console.Write("\nСлово: ");
-    foreach (var letter in word)
+    foreach (var letter in phrase)
         Console.Write((matchedLetters[letter] || letter == ' ') ? letter : "-");
 }
 
@@ -224,6 +233,7 @@ string GetLine4(int @try) => @try switch
     7 => "                │             ┃                          │",
     8 => "                │             ┃                          │",
     9 => "                │             ┃                          │",
+   10 => "                │             ┃                          │",
     _ => "                │             ┃  ╱ ╲                     │",
 };
 
@@ -238,6 +248,7 @@ string GetLine3(int @try) => @try switch
     7 => "                │             ┃                          │",
     8 => "                │             ┃                          │",
     9 => "                │             ┃                          │",
+   10 => "                │             ┃                          │",
     _ => "                │             ┃  ╱│╲                     │",
 };
 
@@ -252,6 +263,7 @@ string GetLine2(int @try) => @try switch
     7 => "                │             ┃                          │",
     8 => "                │             ┃                          │",
     9 => "                │             ┃                          │",
+   10 => "                │             ┃   ☻                      │",
     _ => "                │             ┃   ☻                      │",
 };
 
@@ -266,6 +278,7 @@ string GetLine1(int @try) => @try switch
     7 => "                │             ┏━━                        │",
     8 => "                │             ┏━━━                       │",
     9 => "                │             ┏━━━┓                      │",
+   10 => "                │             ┏━━━┓                      │",
     _ => "                │             ┏━━━┓                      │",
 };
 
@@ -282,7 +295,7 @@ void DrawSuccessAndWait() // выводим победное окно
                 │                                           │
                 ╰┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄╯
 
-                     Загаданное слово: {word}
+                     Загаданное слово: {phrase}
 
              На этот раз тебе повезло.. Но ничего, мы ещё поквитаемся!
 """);
